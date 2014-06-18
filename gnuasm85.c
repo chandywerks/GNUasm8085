@@ -1,7 +1,11 @@
-// GNUasm85 by Christoper "BlackCow" Handwerker
-// www.homebrewtechnology.org
-// email: blackcow99@gmail.com or chandwer@student.fitchburgstate.edu
+/*
+gnuasm85
 
+Chris Handwerker (2011) <chris.handwerker@gmail.com>
+http://homebrewtechnology.org
+
+Parser to convert GNUSim8085 assembler listings to binary OP codes for the Intel 8085 CPU
+*/
 #include <stdio.h>
 
 int shex(char *buffer)
@@ -88,15 +92,18 @@ main(int argc, char *argv[])
 	if (argc != 2 && argc != 4)
 	{
 		printf("Usage: %s foo.asm -o foo.bin\n", argv[0]);
-		printf("\nWhere foo.asm is an assembler listing from GNUSim8085.\n");
-		printf("To get an assembler listing of your program,\nopen up GNUSim8085 and hit Ctrl + L and save it to a file.\n\n");
-		printf("Also make sure you set the \"Load me at\" value to the proper address offset.\n");
+		printf
+		(
+			"\nWhere foo.asm is an assembler listing from GNUSim8085.\n"
+			"To get an assembler listing of your program,\nopen up GNUSim8085 and hit Ctrl + L and save it to a file.\n\n"
+			"Also make sure you set the \"Load me at\" value to the proper address offset.\n"
+		);
 		return 0;
 	}
 	
 	FILE *file = fopen(argv[1], "rb");	//gets file pointer of file given in argument
 		
-	if (file == 0)
+	if (!file)
 	{
 		printf("Could not open file\n");
 		return 0;
@@ -118,9 +125,7 @@ main(int argc, char *argv[])
 
 	// Read source file into source array
 	for (x = 0; x <= file_size; x++)
-	{
 		input[x] = fgetc(file);
-	}
 
 	fclose(file);
 
@@ -133,9 +138,7 @@ main(int argc, char *argv[])
 	for(x=0; x < file_size; x++)	// Keeps going until end of file
 	{	
 		while( (input[x] == ' ') || (input[x] == '\t') )		//Skip white space and go to first real charecter on the line
-		{
 			x++;
-		}
 			
 		z = 0;	//Reset hex status counter (used skip first hex value A.K.A. the address)
 		while(input[x] != '\n')			//Keep looping until new line charecter reached
@@ -143,9 +146,8 @@ main(int argc, char *argv[])
 			if(input[x] == ';')			//If comment charecter seek to end of line
 			{
 				while(input[x] != '\n')
-				{
 					x++;
-				}
+
 				break;						//Finished with this line, break out of main loop to process next line of code
 			}
 				
@@ -170,52 +172,43 @@ main(int argc, char *argv[])
 			if ((y >= 1) && (z > 0))			//8 bit hex char found passed the address offset value
 			{					
 				output[offset] = shex(buffer);
-				//printf("%x ", output[offset]);
 				offset++;
 			}
 			else if (y == -1)		//Ran into a non-hex charecter
 			{
 				while(input[x] != '\n')		//Done with line, seek to end
-				{
 					x++;
-				}	
 			}
 
 			z++;			// First hex (address) found
 			y=0; 			// Reset hex buffer counter
 
 			if(input[x] != '\n')		// In case new line char reached inside hex reading while loop 
-			{								
 				x++;
-			}
 		} //end hex reading while loop
 	}
 	
 	//Output parsed hex data to file
 	if(offset > 1)
 	{
-		
 		if (argc == 2)
-		{	
 			file = fopen("output.bin", "wb");
-		}
 		else
-		{
 			file = fopen(argv[3], "wb");
-		}
 
 		for(x=0; x<offset; x++)
-		{	
 			fputc(output[x], file);
-		}
 
 		printf("Successfully parsed %d bytes of data. Cheers!\n", offset-1);
 	}
 	else
 	{
-		printf("No hex data was found!\nMake sure the input file is an assembler listing.\n\n");
-		printf("To get an assembler listing of your program,\nopen up GNUSim8085 and hit Ctrl + L and save it to a file.\n\n");
-		printf("Also make sure you set the \"Load me at\" value to the proper address offset.\n");
+		printf
+		(
+			"No hex data was found!\nMake sure the input file is an assembler listing.\n\n"
+			"To get an assembler listing of your program,\nopen up GNUSim8085 and hit Ctrl + L and save it to a file.\n\n"
+			"Also make sure you set the \"Load me at\" value to the proper address offset.\n"
+		);
 	}	
 	return 0;
 }
