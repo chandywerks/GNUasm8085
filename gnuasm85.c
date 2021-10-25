@@ -14,10 +14,10 @@ int shex(char *buffer)
 	int result = 0;	// Final result
 	int x = 0;			// Buffer counter
 	int y = 0;			// General purpose counter
-	
+
 	while(buffer[x] != '\0')
 	{
-		switch (buffer[x]) 
+		switch (buffer[x])
 		{
 			case '0':
 				value = 0;
@@ -86,9 +86,9 @@ int shex(char *buffer)
 	return result;
 }
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-		
+
 	if (argc != 2 && argc != 4)
 	{
 		printf("Usage: %s foo.asm -o foo.bin\n", argv[0]);
@@ -100,16 +100,16 @@ main(int argc, char *argv[])
 		);
 		return 0;
 	}
-	
+
 	FILE *file = fopen(argv[1], "rb");	//gets file pointer of file given in argument
-		
+
 	if (!file)
 	{
 		printf("Could not open file\n");
 		return 0;
 	}
-		
-	
+
+
 	// Load file into allocated array
 	//--------------------------------------->
 
@@ -117,11 +117,12 @@ main(int argc, char *argv[])
 	int x;							//	current array position
 	int y = 0;						//	hex buffer counter
 	int z = 0;						//	general purpose status counter
-	
+	int toMuchSpace = 0;            //  too many spaces preventer
+
 	fseek(file, 0, SEEK_END); 		// seek to end of file
 	file_size = ftell(file); 		// get current file pointer
 	fseek(file, 0, SEEK_SET); 		// seek back to beginning of file
-	int input[file_size];			// source file array	
+	int input[file_size];			// source file array
 
 	// Read source file into source array
 	for (x = 0; x <= file_size; x++)
@@ -136,26 +137,32 @@ main(int argc, char *argv[])
 	//Strips out hex data
 
 	for(x=0; x < file_size; x++)	// Keeps going until end of file
-	{	
-		while( (input[x] == ' ') || (input[x] == '\t') )		//Skip white space and go to first real charecter on the line
-			x++;
-			
+	{
+	    toMuchSpace = 0;
+	    		//Skip white space and go to first real character on the line
+		while( (input[x] == ' ') || (input[x] == '\t') )
+            x++;
+
 		z = 0;	//Reset hex status counter (used skip first hex value A.K.A. the address)
-		while(input[x] != '\n')			//Keep looping until new line charecter reached
+		while(input[x] != '\n')			//Keep looping until new line character reached
 		{
-			if(input[x] == ';')			//If comment charecter seek to end of line
+		    if( (input[x] == ' ') || (input[x] == '\t') ){
+                toMuchSpace++;
+		    }
+			if( (input[x] == ';') || (toMuchSpace >= 3) )//If comment character, or if there are too many spaces, seek to end of line.
 			{
 				while(input[x] != '\n')
 					x++;
 
 				break;						//Finished with this line, break out of main loop to process next line of code
 			}
-				
+
 			//Start reading in hex data here
 			while( (input[x] != ' ') && (input[x] != '\t'))  //Read in hex numbers until space char reached
 			{
+			    toMuchSpace = 0;    //reset toMuchSpace any time we get any other char.
 				if( (input[x] >= '0' && input[x] <= '9') || (input[x] >= 'a' && input[x] <= 'f') || (input[x] >= 'A' && input[x] <= 'F') )
-				{									
+				{
 					buffer[y] = input[x];	//Store in temporary buffer
 					y++;
 				}
@@ -166,15 +173,15 @@ main(int argc, char *argv[])
 				}
 				x++;
 			}
-				
+
 			buffer[y] = '\0';		//Null terminate hex string buffer
 
 			if ((y >= 1) && (z > 0))			//8 bit hex char found passed the address offset value
-			{					
+			{
 				output[offset] = shex(buffer);
 				offset++;
 			}
-			else if (y == -1)		//Ran into a non-hex charecter
+			else if (y == -1)		//Ran into a non-hex character
 			{
 				while(input[x] != '\n')		//Done with line, seek to end
 					x++;
@@ -183,11 +190,11 @@ main(int argc, char *argv[])
 			z++;			// First hex (address) found
 			y=0; 			// Reset hex buffer counter
 
-			if(input[x] != '\n')		// In case new line char reached inside hex reading while loop 
+			if(input[x] != '\n')		// In case new line char reached inside hex reading while loop
 				x++;
 		} //end hex reading while loop
 	}
-	
+
 	//Output parsed hex data to file
 	if(offset > 1)
 	{
@@ -209,7 +216,7 @@ main(int argc, char *argv[])
 			"To get an assembler listing of your program,\nopen up GNUSim8085 and hit Ctrl + L and save it to a file.\n\n"
 			"Also make sure you set the \"Load me at\" value to the proper address offset.\n"
 		);
-	}	
+	}
 	return 0;
 }
 
